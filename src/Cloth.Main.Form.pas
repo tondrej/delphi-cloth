@@ -1,11 +1,15 @@
 unit Cloth.Main.Form;
 
+{$IFDEF FPC}
+  {$MODE Delphi}
+{$ENDIF}
+
 interface
 
 uses
-  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
-  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.AppEvnts, Vcl.ExtCtrls, System.Generics.Collections,
-  System.Types, ClothDemo.Cloth, Vcl.StdCtrls;
+  Windows, Messages, SysUtils, Variants, Classes, Graphics,
+  Controls, Forms, Dialogs, ExtCtrls,
+  Types, Contnrs, ClothDemo.Cloth, StdCtrls;
 
 type
   TfrmMain = class(TForm)
@@ -28,7 +32,7 @@ type
     FLastUpdate:TDateTime;
   public
     World: TWorld;
-    Cloths: TObjectList<TCloth>;
+    Cloths: TObjectList;
   end;
 
 var
@@ -46,7 +50,7 @@ begin
   World := TWorld.CreateWithDefaults(PaintBox.Width, PaintBox.Height);
 
   Cloths.Free;
-  Cloths := TObjectList<TCloth>.Create;
+  Cloths := TObjectList.Create;
 
   for I := -1 to 1 do
   begin
@@ -110,7 +114,7 @@ begin
   FLastUpdate := now;
   World.ClearCanvas;
   for i := 0 to Cloths.Count-1 do
-    Cloths[i].Update(0.016);
+    TCloth(Cloths[i]).Update(0.016);
   PaintBox.Invalidate;
 end;
 

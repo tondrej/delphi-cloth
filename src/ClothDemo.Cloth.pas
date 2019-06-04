@@ -1,9 +1,13 @@
 unit ClothDemo.Cloth;
 
+{$IFDEF FPC}
+  {$MODE Delphi}
+{$ENDIF}
+
 interface
 
 uses
-  System.UITypes, System.Types, Vcl.Graphics, System.Generics.Collections;
+  UITypes, Types, Contnrs, Controls, Graphics;
 
 type
   TMouseState = record
@@ -37,8 +41,17 @@ type
 
   TClothPoint = class
 
-    type TPointFHelper = record helper for TPointF
-      function SquareDistance(const P2: TPointF): Double;
+    type
+
+    { TPointFHelper }
+
+ TPointFHelper = record helper for TPointF
+      function SquareDistance(const P2: TPointF): Double; {$ifdef FPC}overload;{$endif}
+{$ifdef FPC}
+      function SquareDistance(const P2: TPoint): Double; overload;
+      class function Zero: TPointF; static;
+      class function Create(x, y: Single): TPointF; static;
+{$endif}
     end;
   var
     World: TWorld;
@@ -47,7 +60,7 @@ type
     Force:TPointF;
     PinPos:TPointF;
     isPinned:Boolean;
-    Constraints: TObjectList<TConstraint>;
+    Constraints: TObjectList;
     constructor Create(aPoint: TPointF; aWorld: TWorld);
     procedure Update(const aRect: TRect; aDelta: double);
     procedure Draw(aColor:TColor);
@@ -74,7 +87,7 @@ type
 
   TCloth = class
     World: TWorld;
-    Points: TObjectList<TClothPoint>;
+    Points: TObjectList;
     Color:TColor;
     procedure Offset(p:TPointF);
     constructor Create(aFree: Boolean; aWorld: TWorld; aXCount, aYCount: integer);
@@ -82,22 +95,64 @@ type
     destructor Destroy; override;
   end;
 
-
+{$ifdef FPC}
+  function PointF(x, y: Single): TPointF; overload;
+  function PointF(const P: TPoint): TPointF; overload;
+{$endif FPC}
 
 implementation
 
-{ TPoint }
+uses
+  Math;
 
-uses Math;
+{$ifdef FPC}
+
+type
+  TRectFHelper = record helper for TRectF
+    function Truncate: TRect;
+  end;
+
+function PointF(x, y: Single): TPointF; overload;
+begin
+  Result.x := x;
+  Result.y := y;
+end;
+
+function PointF(const P: TPoint): TPointF; overload;
+begin
+  Result := PointF(P.x, P.y);
+end;
+
+function RectF(Left, Top, Right, Bottom: Single): TRectF;
+begin
+  Result.Left := Left;
+  Result.Top := Top;
+  Result.Right := Right;
+  Result.Bottom := Bottom;
+end;
+
+{ TRectFHelper }
+
+function TRectFHelper.Truncate: TRect;
+begin
+  Result.Left := Trunc(Left);
+  Result.Top := Trunc(Top);
+  Result.Right := Trunc(Right);
+  Result.Bottom := Trunc(Bottom);
+end;
+
+{$endif FPC}
 
 constructor TClothPoint.Create(aPoint: TPointF; aWorld: TWorld);
 begin
   World     := aWorld;
   Pos       := aPoint;
   PrevPos   := Pos;
-  Force     := TPointF.Zero;
-  PinPos    := TPointF.Zero;
-  Constraints := TObjectList<TConstraint>.Create;
+  Force.x := 0;
+  Force.y := 0;
+  PinPos.x := 0;
+  PinPos.y := 0;
+  Constraints := TObjectList.Create;
 end;
 
 destructor TClothPoint.Destroy;
@@ -115,7 +170,7 @@ begin
     World.Buffer.Canvas.FillRect(Rectf(Pos.X-2,Pos.Y-2,Pos.X+2,Pos.Y+2).Truncate);
 
   for i := Constraints.Count-1 downto 0 do
-    Constraints[i].Draw(World.Buffer.Canvas, aColor);
+    TConstraint(Constraints[i]).Draw(World.Buffer.Canvas, aColor);
 end;
 
 procedure TClothPoint.Update(const aRect: TRect; aDelta: double);
@@ -130,7 +185,7 @@ begin
   begin
     sqdist := Pos.SquareDistance(World.Mouse.Pos);
     if (World.Mouse.Button = TMouseButton.mbLeft) and (sqdist < sqr(World.Mouse.Influence)) then
-      PrevPos := Pos - (World.Mouse.Pos - World.Mouse.PrevPos)
+      PrevPos := Pos - (PointF(World.Mouse.Pos) - PointF(World.Mouse.PrevPos))
     else if sqdist < sqr(World.Mouse.Cut) then
       Constraints.Clear;
   end;
@@ -150,7 +205,7 @@ begin
     Exit;
 
   for i := Constraints.Count-1 downto 0 do
-    Constraints[i].Resolve;
+    TConstraint(Constraints[i]).Resolve;
 end;
 
 procedure TClothPoint.Attach(aPoint: TClothPoint);
@@ -160,7 +215,7 @@ end;
 
 procedure TClothPoint.Free(aConstraint: TConstraint);
 begin
-  Constraints.Delete(Constraints.IndexOf(aConstraint));
+  Constraints.Remove(aConstraint);
 end;
 
 procedure TClothPoint.AddForce(const aForce:TPointF);
@@ -233,10 +288,10 @@ var i:integer;
 begin
   for I := 0 to Points.Count - 1 do
   begin
-    Points[I].Pos.Offset(p);
-    Points[I].PrevPos.Offset(p);
-    Points[I].Force.Offset(p);
-    Points[I].PinPos.Offset(p);
+    TClothPoint(Points[I]).Pos.Offset(p);
+    TClothPoint(Points[I]).PrevPos.Offset(p);
+    TClothPoint(Points[I]).Force.Offset(p);
+    TClothPoint(Points[I]).PinPos.Offset(p);
   end;
 end;
 
@@ -248,7 +303,7 @@ var
   point : TClothPoint;
 begin
   World  := aWorld;
-  Points := TObjectList<TClothPoint>.Create;
+  Points := TObjectList.Create;
   startX := World.Buffer.Canvas.ClipRect.Width / 2 - aXCount * World.Spacing / 2;
   startY := 20;
 
@@ -266,9 +321,9 @@ begin
       if (not aFree) and (y = 0) and (x mod 5 = 0) then
         point.Pin;
       if x <> 0 then
-        point.Attach(Points.Last);
+        point.Attach(TClothPoint(Points.Last));
       if y <> 0 then
-        point.Attach(Points[x + (y - 1) * (aXCount + 1)]);
+        point.Attach(TClothPoint(Points[x + (y - 1) * (aXCount + 1)]));
       Points.Add(point);
     end;
   end;
@@ -280,12 +335,12 @@ var
 begin
   for a := 0 to World.Accuracy-1 do
     for p := Points.Count-1 downto 0 do
-        Points[p].Resolve;
+        TClothPoint(Points[p]).Resolve;
 
   for p := 0 to Points.Count-1 do
   begin
-    Points[p].Update(World.Buffer.Canvas.ClipRect, aDelta * aDelta);
-    Points[p].Draw(Color);
+    TClothPoint(Points[p]).Update(World.Buffer.Canvas.ClipRect, aDelta * aDelta);
+    TClothPoint(Points[p]).Draw(Color);
   end;
 end;
 
@@ -352,5 +407,24 @@ function TClothPoint.TPointFHelper.SquareDistance(const P2: TPointF): Double;
 begin
   Result := Sqr(Self.X - P2.X) + Sqr(Self.Y - P2.Y);
 end;
+
+function TClothPoint.TPointFHelper.SquareDistance(const P2: TPoint): Double;
+begin
+  Result := SquareDistance(PointF(P2.x, P2.y));
+end;
+
+{$ifdef FPC}
+class function TClothPoint.TPointFHelper.Zero: TPointF;
+begin
+  Result.x := 0;
+  Result.y := 0;
+end;
+
+class function TClothPoint.TPointFHelper.Create(x, y: Single): TPointF;
+begin
+  Result.x := x;
+  Result.y := y;
+end;
+{$endif FPC}
 
 end.

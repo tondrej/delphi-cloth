@@ -1,13 +1,14 @@
 unit Cloth.Main.Form;
 
-{$IFDEF FPC}
-  {$MODE Delphi}
-{$ENDIF}
+{$ifdef FPC}
+  {$mode Delphi}
+  {$macro ON}
+{$endif FPC}
 
 interface
 
 uses
-  Windows, Messages, SysUtils, Variants, Classes, Graphics,
+  SysUtils, Classes, Graphics,
   Controls, Forms, Dialogs, ExtCtrls,
   Types, Contnrs, ClothDemo.Cloth, StdCtrls;
 
@@ -74,6 +75,9 @@ end;
 
 procedure TfrmMain.FormCreate(Sender: TObject);
 begin
+{$ifdef FPC}
+  Caption := Format('%s for %s-%s', [Caption, lowercase({$I %FPCTARGETOS%}), lowercase({$I %FPCTARGETCPU%})]);
+{$endif FPC}
   btnResetClick(Sender);
 end;
 

@@ -1,8 +1,8 @@
 program ClothDemo;
 
-{$IFDEF FPC}
-  {$MODE Delphi}
-{$ENDIF}
+{$ifdef FPC}
+  {$mode Delphi}
+{$endif FPC}
 
 uses
 {$ifdef FPC}

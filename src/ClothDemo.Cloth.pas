@@ -1,8 +1,8 @@
 unit ClothDemo.Cloth;
 
-{$IFDEF FPC}
-  {$MODE Delphi}
-{$ENDIF}
+{$ifdef FPC}
+  {$mode Delphi}
+{$endif FPC}
 
 interface
 

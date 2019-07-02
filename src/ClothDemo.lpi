@@ -40,7 +40,9 @@
       <Unit1>
         <Filename Value="Cloth.Main.Form.pas"/>
         <IsPartOfProject Value="True"/>
+        <ComponentName Value="frmMain"/>
         <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
       </Unit1>
       <Unit2>
         <Filename Value="ClothDemo.Cloth.pas"/>

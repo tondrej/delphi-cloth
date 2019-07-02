@@ -262,7 +262,10 @@ begin
 
   diff := (Length - dist) / dist;
   if dist > World.TearDist then
+  begin
     P1.Free(self);
+    Exit;
+  end;
 
   mul := diff * 0.5 * (1 - Length / dist);
   p  := d * mul;
@@ -304,7 +307,7 @@ var
 begin
   World  := aWorld;
   Points := TObjectList.Create;
-  startX := World.Buffer.Canvas.ClipRect.Width / 2 - aXCount * World.Spacing / 2;
+  startX := World.Buffer.Width / 2 - aXCount * World.Spacing / 2;
   startY := 20;
 
   for y := 0 to aYCount do
@@ -339,7 +342,7 @@ begin
 
   for p := 0 to Points.Count-1 do
   begin
-    TClothPoint(Points[p]).Update(World.Buffer.Canvas.ClipRect, aDelta * aDelta);
+    TClothPoint(Points[p]).Update(Rect(0, 0, World.Buffer.Width, World.Buffer.Height), aDelta * aDelta);
     TClothPoint(Points[p]).Draw(Color);
   end;
 end;
@@ -362,7 +365,7 @@ end;
 procedure TWorld.ClearCanvas;
 begin
   Buffer.Canvas.Brush.Color := $888888;
-  Buffer.Canvas.FillRect(Buffer.Canvas.ClipRect);
+  Buffer.Canvas.FillRect(Rect(0, 0, Buffer.Width, Buffer.Height));
 end;
 
 constructor TWorld.Create;
